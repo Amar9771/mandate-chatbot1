@@ -22,7 +22,7 @@ except Exception as e:
     logging.error(f"❌ Error loading Excel file: {e}")
     df = pd.DataFrame()
 
-# Core logic to extract response
+
 def get_mandate_info(text):
     try:
         match = re.search(r'\b\d{2}[\s-]?\d{3}\b', text)
@@ -60,7 +60,7 @@ def get_mandate_info(text):
         if "issue size" in text_lower:
             return f"<p><strong>Mandate ID:</strong> {mandate_id}</p><p><strong>Issue Size:</strong> {record.get('Issue Size', 'N/A')} Cr</p>"
 
-        # Default: All info
+        # Default - return full details
         published_date = record.get('Published Date')
         published_date_str = published_date.strftime('%Y-%m-%d') if pd.notnull(published_date) else "N/A"
         return f"""
@@ -69,7 +69,7 @@ def get_mandate_info(text):
         <p><strong>Chairperson:</strong> {record.get('Chairperson', 'N/A')}</p>
         <p><strong>Rating Type:</strong> {record.get('Rating Type', 'N/A')}</p>
         <p><strong>Rating:</strong> {record.get('Rating', 'N/A')}</p>
-        <p><strong>Mandate Status:</strong> {record.get('Mandate Status', 'N/A')}</p>
+        <p><strong>Status:</strong> {record.get('Mandate Status', 'N/A')}</p>
         <p><strong>Rating Action:</strong> {record.get('RatingAction', 'N/A')}</p>
         <p><strong>Published Date:</strong> {published_date_str}</p>
         <p><strong>Issue Size:</strong> {record.get('Issue Size', 'N/A')} Cr</p>
@@ -79,19 +79,24 @@ def get_mandate_info(text):
         logging.error(f"⚠️ Error in get_mandate_info: {e}")
         return "⚠️ Something went wrong. Please try again."
 
-# Routes
+
 @app.route("/")
 def index():
-    return render_template("index.html")
+    try:
+        return render_template("index.html")
+    except Exception as e:
+        logging.error(f"Template load error: {e}")
+        return "❌ Template not found. Make sure 'index.html' is in the 'templates' folder."
+
 
 @app.route("/ask", methods=["POST"])
 def ask():
     user_text = request.json.get("message", "")
-    logging.info(f"🧠 Received query: {user_text}")
     reply = get_mandate_info(user_text)
     return jsonify({"reply": reply})
 
-# Entry point
+
 if __name__ == "__main__":
+    # For Render or other PaaS, bind to 0.0.0.0 and use PORT env var
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(debug=False, host="0.0.0.0", port=port)
