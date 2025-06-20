@@ -22,6 +22,7 @@ except Exception as e:
     logging.error(f"❌ Error loading Excel file: {e}")
     df = pd.DataFrame()
 
+# Core logic to extract response
 def get_mandate_info(text):
     try:
         match = re.search(r'\b\d{2}[\s-]?\d{3}\b', text)
@@ -59,7 +60,7 @@ def get_mandate_info(text):
         if "issue size" in text_lower:
             return f"<p><strong>Mandate ID:</strong> {mandate_id}</p><p><strong>Issue Size:</strong> {record.get('Issue Size', 'N/A')} Cr</p>"
 
-        # Default - return all info
+        # Default: All info
         published_date = record.get('Published Date')
         published_date_str = published_date.strftime('%Y-%m-%d') if pd.notnull(published_date) else "N/A"
         return f"""
@@ -78,6 +79,7 @@ def get_mandate_info(text):
         logging.error(f"⚠️ Error in get_mandate_info: {e}")
         return "⚠️ Something went wrong. Please try again."
 
+# Routes
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -85,8 +87,11 @@ def index():
 @app.route("/ask", methods=["POST"])
 def ask():
     user_text = request.json.get("message", "")
+    logging.info(f"🧠 Received query: {user_text}")
     reply = get_mandate_info(user_text)
     return jsonify({"reply": reply})
 
+# Entry point
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
