@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mandate Chatbot - FY 2024–2025</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --primary-color: #0c2d48;
+      --secondary-color: #145374;
+      --accent-color: #5588a3;
+      --bg-color: #f4f6f9;
+      --text-color: #333;
+      --bot-bg: #e2e3e5;
+      --user-bg: #007bff;
+      --header-bg: var(--primary-color);
+      --white: #ffffff;
+    }
+
+    body.dark {
+      --bg-color: #1c1e22;
+      --text-color: #f0f0f0;
+      --bot-bg: #2e2e2e;
+      --user-bg: #5588a3;
+      --header-bg: #000000;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    #login-screen {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+    }
+
+    #login-box {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    }
+
+    #login-box input {
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      width: 100%;
+    }
+
+    #login-box button {
+      margin-top: 15px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    #chat-wrapper {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 9999;
+    }
+
+    #chat-fab {
+      background-color: var(--accent-color);
+      color: white;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: none;
+      font-size: 28px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      cursor: pointer;
+    }
+
+    #chat-container {
+      width: 360px;
+      height: 500px;
+      background: var(--white);
+      display: none;
+      flex-direction: column;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    #header {
+      background-color: var(--header-bg);
+      color: white;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    #chatbox {
+      flex-grow: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--bg-color);
+    }
+
+    .user-msg, .bot-msg {
+      max-width: 85%;
+      padding: 10px 14px;
+      margin-bottom: 10px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .user-msg {
+      align-self: flex-end;
+      background-color: var(--user-bg);
+      color: white;
+    }
+
+    .bot-msg {
+      align-self: flex-start;
+      background-color: var(--bot-bg);
+      color: var(--text-color);
+    }
+
+    #quick-actions {
+      display: flex;
+      gap: 8px;
+      padding: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      border-top: 1px solid #ccc;
+      background-color: var(--white);
+    }
+
+    .action-btn {
+      padding: 6px 12px;
+      background-color: var(--secondary-color);
+      color: white;
+      border: none;
+      border-radius: 16px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .action-btn:hover {
+      background-color: var(--primary-color);
+    }
+
+    #input-area {
+      display: flex;
+      padding: 12px;
+      background-color: var(--white);
+      border-top: 1px solid #ccc;
+    }
+
+    #userInput {
+      flex: 1;
+      padding: 10px;
+      font-size: 13px;
+      border: 1px solid #ccc;
+      border-radius: 16px;
+      outline: none;
+    }
+
+    #send-btn, #mic-btn, #sound-toggle, #dark-toggle {
+      margin-left: 8px;
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    #typing {
+      font-style: italic;
+      font-size: 13px;
+      color: #666;
+      padding: 0 16px;
+      display: none;
+    }
+
+    @media screen and (max-width: 600px) {
+      #chat-container {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+      }
+      #chat-wrapper {
+        right: 0;
+        bottom: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="login-screen">
+    <div id="login-box">
+      <h3>Enter your name to start</h3>
+      <input type="text" id="username" placeholder="Your name...">
+      <button onclick="storeName()">Continue</button>
+    </div>
+  </div>
+
+  <div id="chat-wrapper">
+    <button id="chat-fab" onclick="toggleChat()">💬</button>
+    <div id="chat-container">
+      <div id="header">
+        🤖 <span id="greeting"></span>
+      </div>
+      <div id="chatbox">
+        <div class="bot-msg"><em>Ask something like: "Who is the analyst for mandate 82669?"</em></div>
+        <div id="typing">🤖 Typing...</div>
+      </div>
+      <div id="quick-actions">
+        <button class="action-btn" onclick="quickAsk('Who is the analyst for mandate 82669?')">Analyst 82669</button>
+        <button class="action-btn" onclick="quickAsk('Show details for mandate 80982')">Details 80982</button>
+        <button class="action-btn" onclick="quickAsk('What’s the rating for mandate 12345?')">Rating 12345</button>
+        <button class="action-btn" onclick="quickAsk('Next mandate')">Next</button>
+        <button class="action-btn" onclick="quickAsk('Previous mandate')">Previous</button>
+      </div>
+      <div id="input-area">
+        <input type="text" id="userInput" placeholder="Ask about mandate ID...">
+        <button id="send-btn" onclick="sendMessage()">▶</button>
+        <button id="mic-btn" onclick="startVoice()">🎤</button>
+        <button id="sound-toggle" onclick="toggleSound()">🔊</button>
+        <button id="dark-toggle" onclick="toggleDarkMode()">🌓</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let soundEnabled = true;
+
+    function toggleChat() {
+      const chat = document.getElementById("chat-container");
+      chat.style.display = chat.style.display === "flex" ? "none" : "flex";
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark");
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById("userInput");
+      const msg = input.value.trim();
+      if (!msg) return;
+
+      appendMessage("user", msg);
+      input.value = "";
+      document.getElementById("typing").style.display = "block";
+
+      const res = await fetch("/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg })
+      });
+
+      const data = await res.json();
+      document.getElementById("typing").style.display = "none";
+      appendMessage("bot", data.reply);
+      if (soundEnabled) speak(data.reply);
+    }
+
+    function appendMessage(sender, message) {
+      const msgDiv = document.createElement("div");
+      msgDiv.className = sender === "user" ? "user-msg" : "bot-msg";
+      msgDiv.innerHTML = message;
+      document.getElementById("chatbox").appendChild(msgDiv);
+      document.getElementById("chatbox").scrollTop = document.getElementById("chatbox").scrollHeight;
+    }
+
+    function quickAsk(text) {
+      document.getElementById("userInput").value = text;
+      sendMessage();
+    }
+
+    function speak(text, lang = 'en-IN') {
+      const msg = new SpeechSynthesisUtterance(text.replace(/<[^>]*>?/gm, ''));
+      msg.lang = lang;
+      window.speechSynthesis.speak(msg);
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      document.getElementById("sound-toggle").innerText = soundEnabled ? "🔊" : "🔇";
+    }
+
+    function startVoice() {
+      const langs = ['en-IN', 'hi-IN', 'kn-IN', 'te-IN'];
+      const recognizers = [];
+      let handled = false;
+
+      langs.forEach(lang => {
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = lang;
+        recognition.interimResults = false;
+
+        recognition.onresult = function(event) {
+          if (handled) return;
+          handled = true;
+          const transcript = event.results[0][0].transcript;
+          document.getElementById("userInput").value = transcript;
+          sendMessage();
+          recognizers.forEach(r => { try { r.abort(); } catch {} });
+        };
+
+        recognition.onerror = function() {
+          if (!handled) alert("Microphone access denied or not detected.");
+        };
+
+        recognition.start();
+        recognizers.push(recognition);
+      });
+
+      setTimeout(() => {
+        if (!handled) {
+          alert("⚠️ Could not detect spoken language. Please try again.");
+          recognizers.forEach(r => r.abort());
+        }
+      }, 10000);
+    }
+
+    function storeName() {
+      const name = document.getElementById("username").value.trim();
+      if (!name) return alert("Please enter your name");
+      localStorage.setItem("username", name);
+      document.getElementById("login-screen").style.display = "none";
+      document.getElementById("greeting").innerText = `Hi ${name}, how can I help you today?`;
+    }
+
+    window.onload = () => {
+      const name = localStorage.getItem("username");
+      if (name) {
+        document.getElementById("login-screen").style.display = "none";
+        document.getElementById("greeting").innerText = `Hi ${name}, how can I help you today?`;
+      }
+    };
+  </script>
+</body>
+</html>
