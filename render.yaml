@@ -1,6 +1,9 @@
 services:
   - type: web
-    name: mandate-chatbot-flask
+    name: mandate-chatbot1
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: streamlit run app.py --server.port $PORT --server.enableCORS false
+    startCommand: python app.py
+    envVars:
+      - key: PORT
+        value: 10000
